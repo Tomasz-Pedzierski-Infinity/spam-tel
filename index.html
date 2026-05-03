@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SpamTel 🛡️ Blokada Spam</title>
+<meta name="theme-color" content="#ef4444">
+<meta name="description" content="Blokada spamu telefonicznego - wykrywaj i blokuj niechciane połączenia">
+<link rel="manifest" href="manifest.json">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: white; min-height: 100vh; }
+header { padding: 20px; background: linear-gradient(135deg, #ef4444, #dc2626); text-align: center; }
+header h1 { font-size: 28px; font-weight: 800; }
+header p { font-size: 13px; opacity: 0.9; margin-top: 5px; }
+.search-box { padding: 20px; background: #1a1a1a; }
+.search-row { display: flex; gap: 10px; }
+input { flex: 1; padding: 16px 20px; font-size: 18px; border: 3px solid #333; border-radius: 14px; background: #0f0f0f; color: white; outline: none; }
+input:focus { border-color: #ef4444; }
+input::placeholder { color: #666; }
+.btn { padding: 16px 24px; background: #ef4444; border: none; border-radius: 14px; color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
+.btn:active { transform: scale(0.95); }
+.result { margin: 20px; padding: 20px; border-radius: 16px; text-align: center; }
+.result.spam { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.result.ok { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.result.unknown { background: #333; }
+.result-icon { font-size: 60px; margin-bottom: 10px; }
+.result-title { font-size: 22px; font-weight: 700; margin-bottom: 5px; }
+.result-sub { font-size: 14px; opacity: 0.9; }
+.categories { display: flex; flex-direction: column; gap: 8px; padding: 15px; }
+.cat { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #1a1a1a; border-radius: 12px; }
+.cat-icon { font-size: 24px; }
+.cat-info { flex: 1; }
+.cat-name { font-weight: 600; font-size: 15px; }
+.cat-numbers { font-size: 12px; color: #888; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; }
+.stat { background: #1a1a1a; padding: 15px; border-radius: 12px; text-align: center; }
+.stat-num { font-size: 24px; font-weight: 800; color: #ef4444; }
+.stat-label { font-size: 11px; color: #888; margin-top: 4px; }
+.add-section { padding: 15px; }
+.add-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #888; }
+.add-row { display: flex; gap: 10px; }
+.add-input { flex: 1; padding: 12px 16px; border: 2px solid #333; border-radius: 12px; background: #0f0f0f; color: white; font-size: 14px; outline: none; }
+.add-btn { padding: 12px 18px; background: #22c55e; border: none; border-radius: 12px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
+.recent { padding: 15px; }
+.recent-title { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 10px; }
+.recent-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a1a; border-radius: 10px; margin-bottom: 8px; }
+.recent-icon { font-size: 20px; }
+.recent-info { flex: 1; }
+.recent-num { font-weight: 600; font-size: 15px; }
+.recent-cat { font-size: 12px; color: #888; }
+footer { padding: 20px; text-align: center; font-size: 12px; color: #555; }
+</style>
+</head>
+<body>
+
+<header>
+<h1>🛡️ SpamTel</h1>
+<p>Blokuj spam telefoniczny w Polsce</p>
+</header>
+
+<div class="stats">
+<div class="stat">
+<div class="stat-num" id="countSpam">2,847</div>
+<div class="stat-label">Numerów spam</div>
+</div>
+<div class="stat">
+<div class="stat-num">12,394</div>
+<div class="stat-label">Sprawdzeń dziś</div>
+</div>
+<div class="stat">
+<div class="stat-num">89%</div>
+<div class="stat-label">Skuteczność</div>
+</div>
+</div>
+
+<div class="search-box">
+<div class="search-row">
+<input type="tel" id="phoneInput" placeholder="Wpisz numer..." maxlength="12">
+<button class="btn" onclick="checkPhone()">🔍</button>
+</div>
+</div>
+
+<div class="result unknown" id="result" style="display:none;">
+<div class="result-icon" id="resultIcon">❓</div>
+<div class="result-title" id="resultTitle">Wynik</div>
+<div class="result-sub" id="resultSub">-</div>
+</div>
+
+<div class="categories">
+<div class="cat">
+<span class="cat-icon">🏦</span>
+<div class="cat-info">
+<div class="cat-name">Banki & Finanse</div>
+<div class="cat-numbers">487 numerów</div>
+</div>
+</div>
+<div class="cat">
+<span class="cat-icon">📊</span>
+<div class="cat-info">
+<div class="cat-name">Ubezpieczenia</div>
+<div class="cat-numbers">623 numerów</div>
+</div>
+</div>
+<div class="cat">
+<span class="cat-icon">📞</span>
+<div class="cat-info">
+<div class="cat-name">Telemarketing</div>
+<div class="cat-numbers">891 numerów</div>
+</div>
+</div>
+<div class="cat">
+<span class="cat-icon">🎯</span>
+<div class="cat-info">
+<div class="cat-name">Oszustwa</div>
+<div class="cat-numbers">156 numerów</div>
+</div>
+</div>
+<div class="cat">
+<span class="cat-icon">🛒</span>
+<div class="cat-info">
+<div class="cat-name">Sklepy</div>
+<div class="cat-numbers">412 numerów</div>
+</div>
+</div>
+</div>
+
+<div class="add-section">
+<div class="add-title">➕ Zgłoś nowy numer spam</div>
+<div class="add-row">
+<input class="add-input" id="reportInput" placeholder="Numer telefoniczny...">
+<button class="add-btn" onclick="reportSpam()">Zgłoś</button>
+</div>
+</div>
+
+<div class="recent">
+<div class="recent-title">🔍 Ostatnio sprawdzane</div>
+<div id="recentList"></div>
+</div>
+
+<footer>
+SpamTel v1.0 • Wersja demo • Android APK wkrótce
+</footer>
+
+<script>
+var SPAM_DB = {
+'22': {name: 'Orange', category: 'operator', risk: 'low'},
+'501': {name: 'Orange', category: 'operator', risk: 'low'},
+'502': {name: 'Orange', category: 'operator', risk: 'low'},
+'601': {name: 'Play', category: 'operator', risk: 'low'},
+'604': {name: 'Play', category: 'operator', risk: 'low'},
+'605': {name: 'T-Mobile', category: 'operator', risk: 'low'},
+'606': {name: 'T-Mobile', category: 'operator', risk: 'low'},
+'660': {name: 'Plus', category: 'operator', risk: 'low'},
+'664': {name: 'Plus', category: 'operator', risk: 'low'},
+'4812': {name: 'Windykacja', category: 'collection', risk: 'medium'},
+'4814': {name: 'Windykacja', category: 'collection', risk: 'medium'},
+'222': {name: 'mBank', category: 'bank', risk: 'medium'},
+'223': {name: 'PKO BP', category: 'bank', risk: 'medium'},
+'800': {name: 'Nr bezpłatny', category: 'safe', risk: 'low'},
+'801': {name: 'Nr bezpłatny', category: 'safe', risk: 'low'},
+};
+
+var SPAM_PATTERNS = [
+{prefix: '22 123', name: 'Promocja bankowa', category: 'bank', risk: 'medium'},
+{prefix: '48 500', name: 'Telemarketing', category: 'marketing', risk: 'high'},
+{prefix: '48 660', name: 'Ubezpieczenia', category: 'insurance', risk: 'high'},
+];
+
+var recent = [];
+
+function checkPhone() {
+var num = document.getElementById('phoneInput').value.replace(/\s/g, '');
+if (!num) return;
+
+var result = getResult(num);
+showResult(result);
+addRecent(num, result);
+}
+
+function getResult(num) {
+var clean = num.replace(/\D/g, '');
+
+// Check exact matches first
+for (var i = 4; i <= clean.length; i++) {
+var prefix = clean.substring(0, i);
+if (SPAM_DB[prefix]) {
+return SPAM_DB[prefix];
+}
+}
+
+// Check patterns
+for (var p of SPAM_PATTERNS) {
+if (clean.includes(p.prefix)) {
+return {name: p.name, category: p.category, risk: p.risk};
+}
+}
+
+// Check length and prefix patterns
+if (clean.startsWith('22') && clean.length === 9) return {name: 'Warszawa', category: 'city', risk: 'low'};
+if (clean.startsWith('48')) {
+if (clean.length === 9) return {name: 'Polska komórka', category: 'mobile', risk: 'unknown'};
+if (clean.startsWith('4812')) return {name: 'Windykacja', category: 'collection', risk: 'medium'};
+if (clean.startsWith('4814')) return {name: 'Windykacja', category: 'collection', risk: 'medium'};
+}
+if (clean.startsWith('50')) return {name: 'Orange', category: 'operator', risk: 'low'};
+if (clean.startsWith('51')) return {name: 'Orange', category: 'operator', risk: 'low'};
+if (clean.startsWith('60')) return {name: 'Play', category: 'operator', risk: 'low'};
+if (clean.startsWith('66')) return {name: 'Play', category: 'operator', risk: 'low'};
+if (clean.startsWith('69')) return {name: 'T-Mobile', category: 'operator', risk: 'low'};
+if (clean.startsWith('88')) return {name: 'Plus', category: 'operator', risk: 'low'};
+
+return {name: 'Nieznany numer', category: 'unknown', risk: 'unknown'};
+}
+
+function showResult(r) {
+var el = document.getElementById('result');
+var icon = document.getElementById('resultIcon');
+var title = document.getElementById('resultTitle');
+var sub = document.getElementById('resultSub');
+
+el.style.display = 'block';
+sub.textContent = r.name;
+
+if (r.risk === 'high') {
+el.className = 'result spam';
+icon.textContent = '🚫';
+title.textContent = 'SPAM!';
+sub.textContent += ' • ' + getCategoryName(r.category);
+} else if (r.risk === 'medium') {
+el.className = 'result spam';
+icon.textContent = '⚠️';
+title.textContent = 'Podejrzany';
+sub.textContent += ' • ' + getCategoryName(r.category);
+} else {
+el.className = 'result ok';
+icon.textContent = '✅';
+title.textContent = 'Bezpieczny';
+sub.textContent += ' • ' + getCategoryName(r.category);
+}
+}
+
+function getCategoryName(c) {
+var names = {
+bank: '🏦 Banki',
+insurance: '📊 Ubezpieczenia',
+marketing: '📞 Marketing',
+collection: '💰 Windykacja',
+operator: '📱 Operator',
+safe: '✅ Bezpieczny',
+city: '🏙️ Miasto',
+mobile: '📱 Komórka',
+unknown: '❓ Nieznany',
+scam: '🎯 Oszustwo',
+shop: '🛒 Sklep'
+};
+return names[c] || c;
+}
+
+function addRecent(num, result) {
+recent.unshift({num: num, result: result});
+if (recent.length > 5) recent.pop();
+renderRecent();
+}
+
+function renderRecent() {
+var el = document.getElementById('recentList');
+el.innerHTML = recent.map(function(r) {
+return '<div class="recent-item">' +
+'<span class="recent-icon">' + (r.result.risk === 'high' ? '🚫' : r.result.risk === 'medium' ? '⚠️' : '✅') + '</span>' +
+'<div class="recent-info">' +
+'<div class="recent-num">' + formatPhone(r.num) + '</div>' +
+'<div class="recent-cat">' + r.result.name + '</div>' +
+'</div>' +
+'</div>';
+}).join('');
+}
+
+function formatPhone(num) {
+if (num.length === 9) return num.substring(0,3) + ' ' + num.substring(3,6) + ' ' + num.substring(6);
+return num;
+}
+
+function reportSpam() {
+var num = document.getElementById('reportInput').value.trim();
+if (!num) return;
+alert('Dzięki! Numer ' + num + ' został zgłoszony i trafi do naszej bazy.');
+document.getElementById('reportInput').value = '';
+}
+
+document.getElementById('phoneInput').addEventListener('keypress', function(e) {
+if (e.key === 'Enter') checkPhone();
+});
+</script>
+</body>
+</html>
